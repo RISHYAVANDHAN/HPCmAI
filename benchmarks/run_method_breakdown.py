@@ -1,33 +1,31 @@
 import time
-from jax import jit
 from jaxfluids.input.input_manager import InputManager
 from jaxfluids.simulation_manager import SimulationManager
 from jaxfluids.data_types.ml_buffers import ParametersSetup, CallablesSetup
 
-def benchmark(case_file, num_file, backend):
+def run(case_file, num_file):
     input_manager = InputManager(case_file, num_file)
     sim = SimulationManager(input_manager)
     jxf_buffers = input_manager.numerical_setup.init_fields(input_manager)
     sim.initialize(jxf_buffers)
 
-    if backend == "jit":
-        sim.do_integration_step = jit(sim.do_integration_step, static_argnums=(0, 2, 3))
-
-    start = time.perf_counter()
+    timings = {}
     for _ in range(10):
+        start = time.perf_counter()
         sim.buffers, _ = sim.do_integration_step(
             sim.buffers,
             sim.compute_control_flow_params(sim.buffers.time_control_variables, sim.buffers.step_information),
             ParametersSetup(),
             CallablesSetup()
         )
-    end = time.perf_counter()
-    return (end - start) / 10
+        end = time.perf_counter()
+        timings.setdefault("TotalTime", []).append(end - start)
+
+    return timings
 
 if __name__ == "__main__":
-    import sys
     case = "benchmarks/configs/case_64.json"
     num = "benchmarks/configs/numerical_base.json"
-    backend = sys.argv[1] if len(sys.argv) > 1 else "jit"
-    t = benchmark(case, num, backend)
-    print(f"{backend.upper()} {case.split('/')[-1]} {t:.6f} sec/step")
+    times = run(case, num)
+    for k, v in times.items():
+        print(f"{k}: {sum(v)/len(v):.6f}")

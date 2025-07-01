@@ -1,19 +1,13 @@
-import time
-from jax import jit
 from jaxfluids.input.input_manager import InputManager
 from jaxfluids.simulation_manager import SimulationManager
 from jaxfluids.data_types.ml_buffers import ParametersSetup, CallablesSetup
 
-def benchmark(case_file, num_file, backend):
+def run_sim(case_file, num_file):
     input_manager = InputManager(case_file, num_file)
     sim = SimulationManager(input_manager)
     jxf_buffers = input_manager.numerical_setup.init_fields(input_manager)
     sim.initialize(jxf_buffers)
 
-    if backend == "jit":
-        sim.do_integration_step = jit(sim.do_integration_step, static_argnums=(0, 2, 3))
-
-    start = time.perf_counter()
     for _ in range(10):
         sim.buffers, _ = sim.do_integration_step(
             sim.buffers,
@@ -21,13 +15,9 @@ def benchmark(case_file, num_file, backend):
             ParametersSetup(),
             CallablesSetup()
         )
-    end = time.perf_counter()
-    return (end - start) / 10
+    return sim.buffers
 
 if __name__ == "__main__":
-    import sys
-    case = "benchmarks/configs/case_64.json"
-    num = "benchmarks/configs/numerical_base.json"
-    backend = sys.argv[1] if len(sys.argv) > 1 else "jit"
-    t = benchmark(case, num, backend)
-    print(f"{backend.upper()} {case.split('/')[-1]} {t:.6f} sec/step")
+    base = "benchmarks/configs/"
+    ref = run_sim(base + "case_128.json", base + "numerical_base.json")
+    print("Reference run complete.")
