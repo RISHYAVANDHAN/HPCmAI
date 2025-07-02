@@ -1,0 +1,54 @@
+{
+  "general": {
+    "case_name": "tgv512",
+    "end_time": 0.2,
+    "save_path": "./results",
+    "save_dt": 0.2
+  },
+  "domain": {
+    "x": { "cells": 512, "range": [0.0, 1.0] },
+    "y": { "cells": 512, "range": [0.0, 1.0] },
+    "z": { "cells": 1, "range": [0.0, 1.0] },
+    "decomposition": { "split_x": 1, "split_y": 1, "split_z": 1 }
+  },
+  "boundary_conditions": {
+    "east": { "type": "PERIODIC" },
+    "west": { "type": "PERIODIC" },
+    "north": { "type": "PERIODIC" },
+    "south": { "type": "PERIODIC" },
+    "top": { "type": "INACTIVE" },
+    "bottom": { "type": "INACTIVE" }
+  },
+  "initial_condition": {
+    "rho": "lambda x, y: jnp.ones_like(x)",
+    "u": "lambda x, y: jnp.sin(2 * jnp.pi * y)",
+    "v": "lambda x, y: -jnp.sin(2 * jnp.pi * x)",
+    "w": "lambda x, y: jnp.zeros_like(x)",
+    "p": "lambda x, y: 1.0 + 0.25 * (jnp.cos(4 * jnp.pi * x) + jnp.cos(4 * jnp.pi * y))"
+  },
+  "forcings": {
+    "gravity": [0.0, 0.0, 0.0]
+  },
+  "material_properties": {
+    "equation_of_state": {
+        "model": "IdealGas",
+        "specific_heat_ratio": 1.4,
+        "specific_gas_constant": 1.0
+    },
+    "transport": {
+        "dynamic_viscosity": {
+        "model": "CUSTOM",
+        "value": 0.001
+        },
+        "bulk_viscosity": 0.0,
+        "thermal_conductivity": {
+        "model": "CUSTOM",
+        "value": 0.0
+        }
+      }
+    },
+      "output": {
+      "primitives": ["density", "velocity", "pressure"],
+      "miscellaneous": ["vorticity"]
+    }
+}
