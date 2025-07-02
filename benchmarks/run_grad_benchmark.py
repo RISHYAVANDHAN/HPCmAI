@@ -1,12 +1,10 @@
 # benchmarks/run_grad_benchmark.py
+
 import jax
 import jax.numpy as jnp
 import time
 import csv
-import os
-
-os.makedirs("benchmarks/results", exist_ok=True)
-csv_file = "benchmarks/results/grad_vs_forward.csv"
+from benchmarks.utils import ensure_dirs
 
 x = jnp.linspace(0, 1, 10000)
 
@@ -14,6 +12,7 @@ def rhs(x):
     return jnp.sin(x) * jnp.exp(x)
 
 def main():
+    ensure_dirs()
     grad_fn = jax.grad(lambda x: jnp.sum(rhs(x)))
 
     t0 = time.time()
@@ -28,7 +27,7 @@ def main():
     bwd = round(t3 - t2, 6)
     print(f"Forward: {fwd}s | Backward: {bwd}s")
 
-    with open(csv_file, "w", newline="") as f:
+    with open("benchmarks/results/grad_vs_forward.csv", "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(["Operation", "TimeSeconds"])
         writer.writerow(["Forward", fwd])
